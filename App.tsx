@@ -1,5 +1,4 @@
-import React, {useEffect} from 'react';
-import {StyleSheet} from 'react-native';
+import React from 'react';
 import * as eva from '@eva-design/eva';
 import {ApplicationProvider} from '@ui-kitten/components';
 import {IconRegistry} from '@ui-kitten/components/ui';
@@ -26,7 +25,11 @@ const App = () => {
                 name="Login"
                 component={Login}
               />
-              <Stack.Screen name="Home" component={Home} />
+              <Stack.Screen
+                options={{headerShown: false}}
+                name="Home"
+                component={Home}
+              />
             </Stack.Navigator>
           </ApplicationProvider>
         </NavigationContainer>
@@ -34,15 +37,5 @@ const App = () => {
     </Provider>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  text: {
-    marginHorizontal: 8,
-  },
-});
 
 export default App;

@@ -24,19 +24,23 @@ import {RootStackParamList} from '../navigation/RootStackPramsList';
 
 type ScreenProps = NavigationProp<RootStackParamList, 'Home'>;
 
-const app = initializeApp(firebaseConfig);
 const Login = () => {
+  const app = initializeApp(firebaseConfig);
+  const navigation = useNavigation<ScreenProps>();
   const {isLogin} = useSelector((state: RootState) => state.user);
   const [isRegister, setIsRegister] = useState(false);
-  const navigation = useNavigation<ScreenProps>();
   const dispatch = useDispatch();
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isLogin) {
-      navigation.navigate('Home');
-    }
-  }, [isLogin]);
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (isLogin) {
+        navigation.navigate('Home');
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const addRoleStorage = async (user: User) => {
     const firestore = getFirestore(app);
@@ -52,7 +56,6 @@ const Login = () => {
   const initialState = {email: '', password: ''};
   const onSubmit = (values: typeof initialState) => {
     const auth = getAuth(app);
-    console.log(values);
     if (isRegister) {
       createUserWithEmailAndPassword(auth, values.email, values.password)
         .then(response => {

@@ -1,4 +1,4 @@
-import {Button, Card, Text, Icon, Layout} from '@ui-kitten/components';
+import {Button, Text, Icon, Layout} from '@ui-kitten/components';
 import {initializeApp} from 'firebase/app';
 import {
   collection,
@@ -6,25 +6,32 @@ import {
   getFirestore,
   deleteDoc,
 } from 'firebase/firestore/lite';
-import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import React, {ReactElement} from 'react';
+import {Alert, StyleSheet, View} from 'react-native';
 import {removeItemGlossary, TypeGlosary} from '../../store/glosarySlice';
 import {firebaseConfig} from '../../utils/firebase-config';
 import {perfectSize} from '../../utils/pixel';
-import {v4 as uuidv4} from 'uuid';
 import {useDispatch} from 'react-redux';
 
-const CardGlosary = ({item: {name, description, id}}: {item: TypeGlosary}) => {
-  console.log(name, description, id);
+const CardGlosary = ({name, description, id}: TypeGlosary): ReactElement => {
   const dispatch = useDispatch();
   const deleted = async (idRemove: string) => {
-    console.log('remove', idRemove);
-    const app = initializeApp(firebaseConfig);
-    const firestore = getFirestore(app);
-    const citiesRef = collection(firestore, 'glossary');
-    const docRef = await doc(citiesRef, idRemove);
-    deleteDoc(docRef);
-    dispatch(removeItemGlossary(idRemove));
+    Alert.alert('Eliminar', `desea eliminar la nota ${name}`, [
+      {
+        text: 'OK',
+        onPress: async () => {
+          const app = initializeApp(firebaseConfig);
+          const firestore = getFirestore(app);
+          const citiesRef = collection(firestore, 'glossary');
+          const docRef = await doc(citiesRef, idRemove);
+          deleteDoc(docRef);
+          dispatch(removeItemGlossary(idRemove));
+        },
+      },
+      {
+        text: 'Cancel',
+      },
+    ]);
   };
   return (
     <Layout style={style.container}>
