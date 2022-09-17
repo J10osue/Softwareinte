@@ -1,3 +1,5 @@
+import firebase from 'firebase/compat/app';
+
 export const firebaseConfig = {
   apiKey: 'AIzaSyAyWNNjqZn9oMVdSZBADg9yen9XIjL8yfE',
   authDomain: 'softprogramapp.firebaseapp.com',
@@ -8,4 +10,3 @@ export const firebaseConfig = {
   measurementId: 'G-H66QR6HD3C',
 };
 
-// Initialize Firebase

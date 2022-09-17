@@ -1,176 +1,87 @@
+import React from 'react';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {
+  BottomNavigation,
+  BottomNavigationTab,
   Button,
-  Card,
-  Modal,
+  Layout,
   Text,
-  Divider,
-  List,
-  Icon,
 } from '@ui-kitten/components';
-import React, {useEffect, useState} from 'react';
-import {View, Dimensions, FlatList, SafeAreaView} from 'react-native';
-import {RootStackParamList} from '../navigation/RootStackPramsList';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useNavigation} from '@react-navigation/native';
-import {initializeApp} from 'firebase/app';
-import {v4 as uuidv4} from 'uuid';
-import {
-  query,
-  getFirestore,
-  where,
-  getDocs,
-  collection,
-  CollectionReference,
-  DocumentData,
-  QueryConstraint,
-} from 'firebase/firestore/lite';
 import {firebaseConfig} from '../utils/firebase-config';
+import ViewHome from './ViewHome';
+import ImagePicker from 'react-native-image-crop-picker';
+import {getDownloadURL, getStorage, ref, uploadBytes} from 'firebase/storage';
+import {initializeApp} from 'firebase/app';
+import {collection, doc, getFirestore, setDoc} from 'firebase/firestore/lite';
+import md5 from 'md5';
 import {RootState} from '../store/store';
-import {useDispatch, useSelector} from 'react-redux';
-import InputLabel from '../components/inputs/InputLabel';
-import {Formik} from 'formik';
-import {perfectSize} from '../utils/pixel';
-import * as Yup from 'yup';
-type HomeScreenProp = StackNavigationProp<RootStackParamList, 'Home'>;
+import {useSelector} from 'react-redux';
+import {Alert} from 'react-native';
 
-const getGloassary = async (
-  ref: CollectionReference<DocumentData>,
-  queryFire: QueryConstraint,
-) => {
-  const q = query(ref, queryFire);
-  return await getDocs(q);
-};
-
-const getGlosary = async (user_id: string): Promise<TypeGlosary[]> => {
-  const app = initializeApp(firebaseConfig);
-  const firestore = getFirestore(app);
-  const citiesRef = collection(firestore, 'glossary');
-  const listGlosary: TypeGlosary[] = [];
-  await getGloassary(citiesRef, where('user_id', '==', user_id)).then(
-    response =>
-      response.forEach(data => listGlosary.push(data.data() as TypeGlosary)),
-  );
-  await getGloassary(citiesRef, where('user_id', '==', '')).then(response => {
-    response.forEach(data => listGlosary.push(data.data() as TypeGlosary));
-  });
-
-  return listGlosary;
-};
-
-const Home = () => {
-  const navigation = useNavigation<HomeScreenProp>();
+const {Navigator, Screen} = createBottomTabNavigator();
+const OrdersScreen = () => {
   const {user} = useSelector((root: RootState) => root.user);
-  const {glossaries} = useSelector((root: RootState) => root.golsary);
-  console.log(user.id, glossaries);
-  const dispatch = useDispatch();
-  useEffect(() => {
-    getGlosary(user.id).then(response => {
-      dispatch(addListGlosaries(response));
+  const onPress = () => {
+    ImagePicker.openPicker({
+      width: 300,
+      height: 400,
+    }).then(async image => {
+      const response = await fetch(image.path);
+      const blob = await response.blob();
+      const app = initializeApp(firebaseConfig);
+
+      const storage = await getStorage(app);
+      const storageRef = await ref(
+        storage,
+        `new_folder/${md5(new Date().toISOString())}.${
+          image.mime.split('/')[1]
+        }`,
+      );
+      await uploadBytes(storageRef, blob).then(async snapshot => {
+        getDownloadURL(snapshot.ref).then(async downloadURL => {
+          const firestore = getFirestore(app);
+          const citiesRef = collection(firestore, 'videos');
+          const docRef = await doc(citiesRef, md5(new Date().toISOString()));
+          const newGlosary = {
+            id: md5(new Date().toISOString()),
+            user_id: user.id,
+            file: downloadURL,
+          };
+          setDoc(docRef, newGlosary);
+        });
+        Alert.alert('Cargado', 'imagen subida correctamente');
+      });
     });
-  }, []);
-  console.log(user, 'user');
-  const [visible, setVisible] = useState(false);
+  };
   return (
-    <View>
-      <Button status="success" onPress={() => setVisible(true)}>
-        add
-      </Button>
-      <ModalGlosarry visible={visible} onPress={() => setVisible(false)} />
-      {/* {glossaries.length ? <CardGlosary item={{...glossaries[0]}} /> : <></>} */}
-      <SafeAreaView>
-        <FlatList data={glossaries} renderItem={CardGlosary} />
-      </SafeAreaView>
-    </View>
+    <Layout style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      <Text category="h1">Upload Videos</Text>
+      <Button onPress={onPress}>Slect file</Button>
+    </Layout>
   );
 };
+const BottomTabBar = ({navigation, state}) => (
+  <BottomNavigation
+    selectedIndex={state.index}
+    onSelect={index => navigation.navigate(state.routeNames[index])}>
+    <BottomNavigationTab title="Home" />
+    <BottomNavigationTab title="Videos" />
+  </BottomNavigation>
+);
+
+const TabNavigator = () => (
+  <Navigator tabBar={props => <BottomTabBar {...props} />}>
+    <Screen
+      options={{
+        title: 'Home',
+      }}
+      name="ViewHome"
+      component={ViewHome}
+    />
+    <Screen name="Videos" component={OrdersScreen} />
+  </Navigator>
+);
+
+const Home = () => <TabNavigator />;
 
 export default Home;
-import {doc, setDoc} from 'firebase/firestore/lite';
-import CardGlosary from '../components/cards/CardGlosary';
-import {
-  addListGlosaries,
-  addNewGlossary,
-  TypeGlosary,
-} from '../store/glosarySlice';
-
-const windowWidth = Dimensions.get('window').width;
-const ModalGlosarry = ({visible, onPress}) => {
-  const {user} = useSelector((root: RootState) => root.user);
-
-  const dispatch = useDispatch();
-  const initialState = {
-    name: '',
-    description: '',
-  };
-  const onSubmit = values => {
-    console.log('submit');
-    addRoleStorage(values);
-  };
-
-  const addRoleStorage = async values => {
-    const app = initializeApp(firebaseConfig);
-    const firestore = getFirestore(app);
-    const citiesRef = collection(firestore, 'glossary');
-    const uuid = uuidv4();
-    const docRef = await doc(citiesRef, uuid);
-    const newGlosary = {
-      id: uuid,
-      user_id: user.id,
-      name: values.name,
-      description: values.description,
-    };
-    setDoc(docRef, newGlosary);
-    dispatch(addNewGlossary(newGlosary));
-  };
-
-  return (
-    <Modal visible={visible}>
-      <Card disabled={true} style={{width: windowWidth - perfectSize(40)}}>
-        <Formik
-          initialValues={initialState}
-          validationSchema={Yup.object({
-            name: Yup.string()
-              .min(2, 'Must be 2 characters or less')
-              .required('Required'),
-            description: Yup.string()
-              .min(2, 'min 2 characters')
-              .max(255, 'Must be 20 characters or less')
-              .required('Required'),
-          })}
-          onSubmit={onSubmit}
-          validateOnBlur
-          validateOnChange>
-          {({handleChange, handleBlur, handleSubmit, errors}) => (
-            <>
-              <InputLabel
-                label="name"
-                placeholder="Name"
-                keyboardType="email-address"
-                onChangeText={handleChange}
-                onBlur={handleBlur}
-                name="name"
-                error={errors.name}
-              />
-              <InputLabel
-                label="descriptión"
-                placeholder="Description"
-                keyboardType="email-address"
-                onChangeText={handleChange}
-                onBlur={handleBlur}
-                name="description"
-                error={errors.description}
-                multiline
-                numberOfLines={3}
-              />
-              <Button onPress={handleSubmit}>GUARDAR</Button>
-              <Divider style={{marginVertical: perfectSize(10)}} />
-              <Button onPress={onPress} status="danger">
-                CANCELAR
-              </Button>
-            </>
-          )}
-        </Formik>
-      </Card>
-    </Modal>
-  );
-};
