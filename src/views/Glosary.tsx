@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Button, Text} from '@ui-kitten/components';
-import {View, FlatList, SafeAreaView} from 'react-native';
+import {View, FlatList, SafeAreaView, StyleSheet} from 'react-native';
 import {initializeApp} from 'firebase/app';
 import {
   query,
@@ -21,6 +21,7 @@ import ModalGlosarry from '../components/modals/ModalGlosarry';
 
 import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
 import Login from './Login';
+import {perfectSize} from '../utils/pixel';
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -39,7 +40,7 @@ function MyTabs() {
   );
 }
 
-const ViewHome = () => {
+const Glosary = () => {
   const {user} = useSelector((root: RootState) => root.user);
   const {glossaries} = useSelector((root: RootState) => root.golsary);
   const [visible, setVisible] = useState(false);
@@ -78,9 +79,15 @@ const ViewHome = () => {
   };
   return (
     <View>
-      <Button status="success" onPress={() => setVisible(true)}>
-        add
-      </Button>
+      <View style={style.container_image}>
+        <Button
+          style={{
+            width: perfectSize(240),
+          }}
+          onPress={() => setVisible(true)}>
+          añadir palabra al glosario
+        </Button>
+      </View>
       <ModalGlosarry
         visible={visible}
         onPress={() => setVisible(false)}
@@ -97,4 +104,13 @@ const ViewHome = () => {
   );
 };
 
-export default ViewHome;
+export default Glosary;
+
+const style = StyleSheet.create({
+  container_image: {
+    display: 'flex',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginVertical: perfectSize(10),
+  },
+});

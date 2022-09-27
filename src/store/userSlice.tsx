@@ -25,10 +25,14 @@ const userSlice = createSlice({
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
     },
+    closeSession: (state, action) => {
+      state.isLogin = false;
+      state.user = initialState.user;
+    },
   },
 });
 
-export const {addUserAuth} = userSlice.actions;
+export const {addUserAuth, closeSession} = userSlice.actions;
 
 export default userSlice;
 
