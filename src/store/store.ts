@@ -12,6 +12,7 @@ import {
   REGISTER,
 } from 'redux-persist';
 import glosarySlice from './glosarySlice';
+import fileSlice from './FilesSlice';
 
 const persistConfig = {
   key: 'root',
@@ -21,6 +22,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   user: userSlice.reducer,
   golsary: glosarySlice.reducer,
+  files: fileSlice.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

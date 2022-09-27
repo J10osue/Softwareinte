@@ -40,7 +40,7 @@ const Login = () => {
     });
 
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, isLogin]);
 
   const addRoleStorage = async (user: User) => {
     const firestore = getFirestore(app);
